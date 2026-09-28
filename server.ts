@@ -163,9 +163,104 @@ ${resumeText.trim()}
     }
   });
 
+  // n8n Chatbot Webhook Endpoint
+  const N8N_CHAT_WEBHOOK_URL =
+    process.env.N8N_CHAT_WEBHOOK_URL ||
+    'https://kaparapu-meghana2006.app.n8n.cloud/webhook/49c9e446-d730-463f-82f6-33a70a5eb966/chat';
+
+  app.post('/api/n8n-chat', async (req, res) => {
+    const { action = 'sendMessage', sessionId, chatInput } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId is required' });
+    }
+
+    const payload: Record<string, any> = {
+      action,
+      sessionId,
+    };
+
+    if (action === 'sendMessage') {
+      if (!chatInput || typeof chatInput !== 'string') {
+        return res.status(400).json({ error: 'chatInput is required for sendMessage' });
+      }
+      payload.chatInput = chatInput;
+    }
+
+    try {
+      // First attempt: call n8n cloud webhook with 15s timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const response = await fetch(N8N_CHAT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        return res.json(data);
+      }
+
+      console.warn(`n8n webhook returned status ${response.status}. Attempting graceful recovery...`);
+    } catch (n8nErr: any) {
+      console.warn('n8n webhook fetch failed or timed out:', n8nErr?.message || n8nErr);
+    }
+
+    // Graceful recovery for session loading
+    if (action === 'loadPreviousSession') {
+      return res.json({ data: [] });
+    }
+
+    // Graceful recovery for sendMessage using server Gemini AI
+    try {
+      if (process.env.GEMINI_API_KEY && chatInput) {
+        const ai = getGenAiClient();
+        const fallbackPrompt = `You are an AI Career and Resume Coach assisting a student as the AI Resume Analyzer Agent.
+The student asked:
+"${chatInput}"
+
+Provide a friendly, highly actionable, and professional response to help them improve their resume or interview preparation. Keep it structured with clear bullet points and bold key points.`;
+
+        const fallbackResponse = await ai.models.generateContent({
+          model: 'gemini-3.8-flash',
+          contents: fallbackPrompt,
+        });
+
+        const outputText =
+          fallbackResponse.text ||
+          "Here are some actionable tips: 1. Quantify achievements with metrics. 2. Highlight key technical tools. 3. Include direct links to live projects or code repositories.";
+
+        return res.json({
+          output: outputText,
+          recovered: true,
+        });
+      }
+    } catch (aiErr: any) {
+      console.error('Gemini fallback failed:', aiErr);
+    }
+
+    // Return friendly message if both fail
+    return res.json({
+      output:
+        "I'm currently receiving high traffic on the workflow. Here are three quick tips while I reconnect:\n• **Quantify your results:** Use metrics and numbers (e.g., 'Improved load speed by 25%').\n• **Highlight relevant skills:** Group skills by category (Languages, Frameworks, Tools).\n• **Showcase GitHub demos:** Include clickable URLs to your portfolio or repository.",
+      recovered: true,
+    });
+  });
+
   // Health check
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', hasKey: !!process.env.GEMINI_API_KEY });
+    res.json({
+      status: 'ok',
+      hasKey: !!process.env.GEMINI_API_KEY,
+      n8nChatWebhook: N8N_CHAT_WEBHOOK_URL,
+    });
   });
 
   // Serve frontend in production or mount Vite in development

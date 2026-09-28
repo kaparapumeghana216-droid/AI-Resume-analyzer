@@ -17,9 +17,12 @@ import {
   GraduationCap,
   Target,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Bot,
+  MessageSquare
 } from 'lucide-react';
 import { SAMPLE_RESUMES } from './sampleResumes';
+import N8nChatbot from './components/N8nChatbot';
 
 interface AnalysisResult {
   skills: string[];
@@ -94,6 +97,7 @@ export default function App() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [chatPrompt, setChatPrompt] = useState<string | null>(null);
 
   const resultsRef = useRef<HTMLDivElement>(null);
   const stepIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -226,9 +230,17 @@ ${result.suggestions.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
           </div>
 
           <div className="flex items-center gap-2 text-xs font-semibold">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200/60 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setChatPrompt("Hi! Can you give me advice on how to improve my resume?")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-xs hover:shadow-sm transition-all cursor-pointer"
+            >
+              <Bot className="w-3.5 h-3.5 text-white" />
+              <span>n8n Chatbot</span>
+            </button>
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200/60 shadow-xs">
               <Cpu className="w-3.5 h-3.5 text-purple-600" />
-              <span className="hidden sm:inline">Powered by</span> Gemini 3
+              <span>Gemini 3</span>
             </span>
           </div>
         </div>
@@ -498,7 +510,20 @@ ${result.suggestions.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
                 )}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setChatPrompt(
+                      `I just analyzed my resume. Here are key suggestions: "${result.suggestions.slice(0, 2).join('; ')}". How can I best implement these in my resume?`
+                    )
+                  }
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-sm flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Bot className="w-4 h-4" />
+                  <span>Ask n8n Agent</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleCopyReport}
@@ -712,6 +737,11 @@ ${result.suggestions.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
           </p>
         </div>
       </footer>
+      {/* Floating n8n Chatbot */}
+      <N8nChatbot
+        initialPrompt={chatPrompt}
+        onClearInitialPrompt={() => setChatPrompt(null)}
+      />
     </div>
   );
 }
