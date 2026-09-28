@@ -23,15 +23,8 @@ import {
 } from 'lucide-react';
 import { SAMPLE_RESUMES } from './sampleResumes';
 import N8nChatbot from './components/N8nChatbot';
-
-interface AnalysisResult {
-  skills: string[];
-  strengths: string[];
-  skillsToImprove: string[];
-  suggestions: string[];
-  workflowLog?: { phase: string; finding: string }[];
-  summary?: string;
-}
+import { AnalysisResult } from './types';
+import { analyzeResumeClientFallback } from './utils/fallbackAnalyzer';
 
 const WORKFLOW_STEPS = [
   {
@@ -136,18 +129,29 @@ export default function App() {
     }, 700);
 
     try {
-      const response = await fetch('/api/analyze-resume', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeText: trimmed }),
-      });
+      let data: AnalysisResult | null = null;
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server returned ${response.status}`);
+      try {
+        const response = await fetch('/api/analyze-resume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resumeText: trimmed }),
+        });
+
+        if (response.ok) {
+          data = await response.json();
+        } else {
+          console.warn(`Server responded with ${response.status}. Initiating client-side analysis engine...`);
+        }
+      } catch (networkErr) {
+        console.warn('Network call to /api/analyze-resume failed, using client fallback:', networkErr);
       }
 
-      const data: AnalysisResult = await response.json();
+      // If backend was not reached or returned 404/405 (e.g. static Vercel build), use intelligent client-side analyzer
+      if (!data) {
+        data = analyzeResumeClientFallback(trimmed);
+        data.isFallback = true;
+      }
 
       if (stepIntervalRef.current) clearInterval(stepIntervalRef.current);
       setCurrentStepIndex(WORKFLOW_STEPS.length - 1);
@@ -307,6 +311,14 @@ ${result.suggestions.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
                 className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 transition-all hover:shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 Frontend Web
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLoadSample(3)}
+                disabled={isAnalyzing}
+                className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200/80 transition-all hover:shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                Competitive Coder
               </button>
               {resumeText && (
                 <button

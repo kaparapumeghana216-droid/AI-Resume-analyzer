@@ -108,5 +108,33 @@ Campus Fitness Club Portal
 ACTIVITIES
 - Lead Organizer, Campus Web Dev Meetup (40+ active student members)
 - 1st Place Winner, Local Community Hackathon 2024`
+  },
+  {
+    label: "Competitive Coder & NPTEL",
+    role: "Java & Python Engineering Student",
+    content: `MEGHANA KAPARAPU
+Email: kaparapumeghana216@gmail.com | LinkedIn: linkedin.com/in/meghana | GitHub: github.com/meghana-dev
+
+EDUCATION
+Vignan's Institute of Engineering for Women
+B.Tech in Computer Science & Engineering (Expected 2026)
+Relevant Coursework: Data Structures & Algorithms, Object-Oriented Programming in Java, Database Management Systems, Operating Systems.
+
+TECHNICAL SKILLS
+- Languages: Java, Python, C, HTML5, CSS3, SQL
+- Database & Tools: DBMS, MySQL, Git, GitHub, VS Code, Postman
+- Core Competencies: Data Structures, Algorithmic Problem Solving, OOP, Relational Database Design
+
+CERTIFICATIONS
+- NPTEL Online Certification (Elite): Programming in Java - IIT Kharagpur (Score: 88%)
+- NPTEL Online Certification (Elite): Data Base Management System - IIT Kharagpur (Score: 67%)
+- Cisco Networking Academy: Python Essentials 1
+- Infosys Springboard: Practical HTML and CSS
+- Certificate of Merit: AI Project Expo 2026 (Round 1 Qualifier) - Organized by MLSC at Vignan's Institute of Engineering for Women
+
+ACHIEVEMENTS & EXTRACURRICULAR ACTIVITIES
+- Competitive Programming: Solved 346+ problems on CodeChef, demonstrating strong data structures and algorithmic problem-solving capabilities.
+- Technical Competitions: Actively participated in college-level debugging and coding contests.
+- Workshops & Upskilling: Attended hands-on technical workshops on Git and GitHub organized by the institution.`
   }
 ];
